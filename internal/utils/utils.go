@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,7 +15,6 @@ func GetOrderFiles() ([]string, error) {
 	var files []string
 
 	error := filepath.Walk(getOrderLocationDir(), func(path string, info os.FileInfo, err error) error {
-		fmt.Println("\t\t", path, "  ", info.Name())
 		if err != nil {
 			return err
 		}
