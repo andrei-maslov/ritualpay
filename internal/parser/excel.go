@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/andrei-maslov/ritualpay/internal/domain"
 
@@ -10,6 +11,8 @@ import (
 
 const (
 	OrderSheet = "Заказ"
+
+	templateVersionCellAdrs = "m2"
 
 	OrderNumberCellAdrs      = "AO13"
 	CustomerFullNameCellAdrs = "O16"
@@ -33,16 +36,37 @@ func Parse(filepath string) (*domain.Order, error) {
 		return nil, nil
 	}
 
+	v, err := parseTemplateVersion(f)
+	if err != nil {
+		fmt.Println("ERR: Ошибка чтения версии файла")
+		return nil, err
+	}
+	fmt.Printf("Версия шаблона: %d", v)
+
 	order := domain.Order{}
 
 	err = parseOrderInfo(f, &order)
 	if err != nil {
-		// TODO Ругнуться
+		fmt.Println("ERR: Ошибка чтения информации о заказе")
+		return nil, err
 	}
 
 	// err := parseServices(f, &order)
 
 	return &order, err
+}
+
+func parseTemplateVersion(f *excelize.File) (int, error) {
+	strV, err := f.GetCellValue(OrderSheet, templateVersionCellAdrs)
+	if err != nil {
+		return -1, err
+	}
+
+	v, err := strconv.Atoi(strV)
+	if err != nil {
+		return -1, err
+	}
+	return v, nil
 }
 
 func parseOrderInfo(f *excelize.File, order *domain.Order) error {
