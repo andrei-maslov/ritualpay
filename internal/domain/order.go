@@ -6,15 +6,16 @@ import (
 )
 
 // Исполнитель работы / услуги
-type Preformer struct {
-	Name string
-}
+// type Preformer struct {
+// 	Name string
+// }
 
 // Услуга
 type Service struct {
 	Name       string
 	Cost       float64
-	Performers []Preformer
+	Note       string
+	Performers []string // []Performer Сделал пока тип string, так как не требуется дополнительной обертки пока
 }
 
 // Заказ
