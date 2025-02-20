@@ -5,28 +5,12 @@ import (
 	"strconv"
 
 	"github.com/andrei-maslov/ritualpay/internal/domain"
+	// "github.com/andrei-maslov/ritaulpay/internal/parser/"
 
 	"github.com/xuri/excelize/v2"
 )
 
-const (
-	OrderSheet = "Заказ"
-
-	templateVersionCellAdrs = "m2"
-
-	OrderNumberCellAdrs      = "AO13"
-	CustomerFullNameCellAdrs = "O16"
-	HomePhomeCellAdrs        = "R17"
-	MobilePhoneCellAdrs      = "AY17"
-	AddressCellAdrs          = "H18"
-
-	DeceasedFullNameCellAdrs     = "O19"
-	DeceasedAgeCellAdrs          = "I20"
-	DeceasedHeightCellAdrs       = "Z20"
-	DeceasedClothingSizeCellAdrs = "BA20"
-	DeceasedBirthDateCellAdrs    = "N21"
-	DeceasedDeathDateCellAdrs    = "AY21"
-)
+var cellAdrs ICellAddress = DefaultCellAddress{}
 
 func Parse(filepath string) (*domain.Order, error) {
 
@@ -51,13 +35,13 @@ func Parse(filepath string) (*domain.Order, error) {
 		return nil, err
 	}
 
-	// err := parseServices(f, &order)
+	err = parseServices(f, &order)
 
 	return &order, err
 }
 
 func parseTemplateVersion(f *excelize.File) (int, error) {
-	strV, err := f.GetCellValue(OrderSheet, templateVersionCellAdrs)
+	strV, err := f.GetCellValue(cellAdrs.OrderSheetName(), cellAdrs.TemplateVersionCell())
 	if err != nil {
 		return -1, err
 	}
@@ -80,21 +64,21 @@ func parseOrderInfo(f *excelize.File, order *domain.Order) error {
 		field       *string
 		title       string
 	}{
-		"order_number":           {OrderNumberCellAdrs, &order.OrderNumber, "Номер счет-заказа"},
-		"customer_full_name":     {CustomerFullNameCellAdrs, &order.CustomerFullName, "ФИО заказчика"},
-		"home_phone":             {HomePhomeCellAdrs, &order.HomePhone, "Добашний телефон"},
-		"mobile_phone":           {MobilePhoneCellAdrs, &order.MobilePhone, "Мобильный телефон"},
-		"address":                {AddressCellAdrs, &order.Address, "Адрес"},
-		"deceased_full_name":     {DeceasedFullNameCellAdrs, &order.DeceasedFullName, "ФИО умершего"},
-		"deceased_age":           {DeceasedAgeCellAdrs, &order.DeceasedAge, "Возраст"},
-		"deceased_height":        {DeceasedHeightCellAdrs, &order.DeceasedHeight, "Рост"},
-		"deceased_clothing_size": {DeceasedClothingSizeCellAdrs, &order.DeceasedClothingSize, "Размер одежды"},
-		"deceased_birth_date":    {DeceasedBirthDateCellAdrs, &order.DeceasedBirthDate, "Дата рождения"},
-		"deceased_death_date":    {DeceasedDeathDateCellAdrs, &order.DeceasedDeathDate, "Дата смерти"},
+		"order_number":           {cellAdrs.OrderNumberCell(), &order.OrderNumber, "Номер счет-заказа"},
+		"customer_full_name":     {cellAdrs.CustomerFullNameCell(), &order.CustomerFullName, "ФИО заказчика"},
+		"home_phone":             {cellAdrs.HomePhomeCell(), &order.HomePhone, "Добашний телефон"},
+		"mobile_phone":           {cellAdrs.MobilePhoneCell(), &order.MobilePhone, "Мобильный телефон"},
+		"address":                {cellAdrs.AddressCell(), &order.Address, "Адрес"},
+		"deceased_full_name":     {cellAdrs.DeceasedFullNameCell(), &order.DeceasedFullName, "ФИО умершего"},
+		"deceased_age":           {cellAdrs.DeceasedAgeCell(), &order.DeceasedAge, "Возраст"},
+		"deceased_height":        {cellAdrs.DeceasedHeightCell(), &order.DeceasedHeight, "Рост"},
+		"deceased_clothing_size": {cellAdrs.DeceasedClothingSizeCell(), &order.DeceasedClothingSize, "Размер одежды"},
+		"deceased_birth_date":    {cellAdrs.DeceasedBirthDateCell(), &order.DeceasedBirthDate, "Дата рождения"},
+		"deceased_death_date":    {cellAdrs.DeceasedDeathDateCell(), &order.DeceasedDeathDate, "Дата смерти"},
 	}
 
 	for key, cell := range cells {
-		value, err := f.GetCellValue(OrderSheet, cell.cellAddress)
+		value, err := f.GetCellValue(cellAdrs.OrderSheetName(), cell.cellAddress)
 		if err != nil {
 			return fmt.Errorf("ERR: Не удалось прочитать поле %s(%s) [%s] - %w", key, cell.title, cell.cellAddress, err)
 		}
