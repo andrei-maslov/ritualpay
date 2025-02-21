@@ -12,10 +12,11 @@ import (
 
 // Услуга
 type Service struct {
-	Name       string
-	Cost       float64
-	Note       string
-	Performers []string // []Performer Сделал пока тип string, так как не требуется дополнительной обертки пока
+	Name            string
+	Cost            int
+	Note            string
+	PerformerPayout int
+	Performers      []string // []Performer Сделал пока тип string, так как не требуется дополнительной обертки пока
 }
 
 // Заказ
@@ -36,6 +37,29 @@ type Order struct {
 	Services []Service
 }
 
+// Метод для вывода информации об услуге
+func (s Service) Print() {
+	fmt.Println("Информация об услуге:")
+	fmt.Printf("├─ Название:          %s\n", s.Name)
+	fmt.Printf("├─ Стоимость:         %d руб.\n", s.Cost)
+	fmt.Printf("├─ Выплата исполнителю: %d руб.\n", s.PerformerPayout)
+
+	if s.Note != "" {
+		fmt.Printf("├─ Примечание:        %s\n", s.Note)
+	} else {
+		fmt.Println("├─ Примечание:        отсутствует")
+	}
+
+	if len(s.Performers) > 0 {
+		fmt.Printf("└─ Исполнители (%d):\n", len(s.Performers))
+		for i, performer := range s.Performers {
+			fmt.Printf("   %d. %s\n", i+1, performer)
+		}
+	} else {
+		fmt.Println("└─ Исполнители:      отсутствуют")
+	}
+}
+
 func (o Order) String() string {
 	var sb strings.Builder
 	sb.WriteString("Order Details:\n")
@@ -51,7 +75,7 @@ func (o Order) String() string {
 	sb.WriteString(fmt.Sprintf("└─ Услуги (%d):\n", len(o.Services)))
 
 	for i, s := range o.Services {
-		sb.WriteString(fmt.Sprintf("   %d. %s (%.2f руб)\n", i+1, s.Name, s.Cost))
+		sb.WriteString(fmt.Sprintf("   %d. %s (%d руб) [%s] - %s\n", i+1, s.Name, s.Cost, strings.Join(s.Performers, ","), s.Note))
 	}
 
 	return sb.String()
