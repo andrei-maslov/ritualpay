@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/andrei-maslov/ritualpay/internal/domain"
 	// "github.com/andrei-maslov/ritaulpay/internal/parser/"
@@ -25,7 +26,7 @@ func Parse(filepath string) (*domain.Order, error) {
 		fmt.Println("ERR: Ошибка чтения версии файла")
 		return nil, err
 	}
-	fmt.Printf("Версия шаблона: %d", v)
+	fmt.Printf("Версия шаблона: %d\n\n", v)
 
 	order := domain.Order{}
 
@@ -36,6 +37,10 @@ func Parse(filepath string) (*domain.Order, error) {
 	}
 
 	err = parseServices(f, &order)
+	if err != nil {
+		fmt.Println("ERR: Ошибка чтения услуг")
+		return nil, err
+	}
 
 	return &order, err
 }
@@ -83,6 +88,81 @@ func parseOrderInfo(f *excelize.File, order *domain.Order) error {
 			return fmt.Errorf("ERR: Не удалось прочитать поле %s(%s) [%s] - %w", key, cell.title, cell.cellAddress, err)
 		}
 		*cell.field = value
+	}
+
+	return nil
+}
+
+func parseServices(f *excelize.File, o *domain.Order) error {
+	for _, serviceRow := range cellAdrs.ServicesRowNumbers() {
+		service := domain.Service{}
+
+		serviceNameCellAdrs := cellAdrs.ServiceNameColumn() + serviceRow
+		costCellAdrs := cellAdrs.CostColumn() + serviceRow
+		noteCellAdrs := cellAdrs.PerformerPayoutColumn() + serviceRow
+		performerPayoutCellAdrs := cellAdrs.PerformerPayoutColumn() + serviceRow
+
+		name, err := f.GetCellValue(cellAdrs.OrderSheetName(), serviceNameCellAdrs)
+		if err != nil {
+			fmt.Println("ERR: Не удалось прочитать Наименование услуги")
+			continue
+		}
+		service.Name = name
+
+		value, err := f.GetCellValue(cellAdrs.OrderSheetName(), costCellAdrs)
+		if err != nil {
+			fmt.Println("ERR: Не удалось прочитать Цену услуги")
+			continue
+		}
+		if strings.TrimSpace(value) != "" {
+			cost, err := strconv.Atoi(value)
+			if err != nil {
+				fmt.Println("ERR: Не удалось преобразовать Цену услуги в число: " + value)
+				continue
+			}
+			service.Cost = cost
+		}
+
+		note, err := f.GetCellValue(cellAdrs.OrderSheetName(), noteCellAdrs)
+		if err != nil {
+			fmt.Println("ERR: Не удалось прочитать примечание")
+			continue
+		}
+		service.Note = note
+
+		value, err = f.GetCellValue(cellAdrs.OrderSheetName(), performerPayoutCellAdrs)
+		if err != nil {
+			fmt.Println("ERR: Не удалось прочитать Стоимость выполнения работ")
+			continue
+		}
+		if strings.TrimSpace(value) != "" {
+			performerPayout, err := strconv.Atoi(value)
+			if err != nil {
+				fmt.Println("ERR: Не удалось преобразовать Стоимость выполнения работ в число: " + value)
+				continue
+			}
+			service.PerformerPayout = performerPayout
+
+			for i, performerColumn := range cellAdrs.PerformersColumns() {
+				performerCellAdrs := performerColumn + serviceRow
+
+				value, err = f.GetCellValue(cellAdrs.OrderSheetName(), performerCellAdrs)
+				if err != nil {
+					fmt.Println("ERR: Не удалось прочитать исполнителя ", i+1)
+					continue
+				}
+
+				trimmedValue := strings.TrimSpace(value)
+				if trimmedValue == "" {
+					continue
+				}
+				service.Performers = append(service.Performers, trimmedValue)
+			}
+		}
+
+		if service.Cost > 0 || service.PerformerPayout > 0 && len(service.Performers) > 0 {
+			o.Services = append(o.Services, service)
+		}
 	}
 
 	return nil
