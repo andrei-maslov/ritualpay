@@ -18,15 +18,8 @@ func Parse(filepath string) (*domain.Order, error) {
 	f, err := excelize.OpenFile(filepath)
 	if err != nil {
 		fmt.Println("ERR: Ошибка открытия файла")
-		return nil, nil
-	}
-
-	v, err := parseTemplateVersion(f)
-	if err != nil {
-		fmt.Println("ERR: Ошибка чтения версии файла")
 		return nil, err
 	}
-	fmt.Printf("Версия шаблона: %d\n\n", v)
 
 	order := domain.Order{}
 

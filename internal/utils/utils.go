@@ -33,3 +33,15 @@ func GetOrderFiles() ([]string, error) {
 
 	return files, nil
 }
+
+func ReportDir() string {
+	return getOrderLocationDir() + "/Отчеты"
+}
+
+func ClearReportDir() error {
+	return os.RemoveAll(ReportDir())
+}
+
+func CreateReportDir() error {
+	return os.MkdirAll(ReportDir(), 0755)
+}
